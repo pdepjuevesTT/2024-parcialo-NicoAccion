@@ -1,5 +1,5 @@
 class Persona {
-  var property efectivo // objeto
+  var property efectivo
   var property tarjetasDeDebito = []
   var property tarjetasDeCredito = []
   var property formaDePagoPreferida = efectivo // Por defecto lo dejo en efectivo
@@ -9,7 +9,7 @@ class Persona {
   method puedePagar(costo) = formaDePagoPreferida.puedePagar(costo)
 
   method comprar(cosa, costo){
-    formaDePagoPreferida.comprar(costo)
+    formaDePagoPreferida.comprar(cosa, costo)
     cosasCompradas.add(cosa)
   }
 
@@ -27,10 +27,6 @@ class Persona {
       formaDePagoPreferida = nuevoPreferido
     }
   }
-
-  method pagarCuotas(){
-    if()
-  }
   
 }
 
@@ -43,6 +39,10 @@ class Efectivo {
     if (self.puedePagar(costo)) {
       efectivoDisponible -= costo
     }
+  }
+
+  method pagarCuota(cuota) {
+      efectivoDisponible -= cuota
   }
 }
 
@@ -62,32 +62,46 @@ class Debito {
 class Credito {
   const maximoPermitido
   const cantidadDeCuotas
-  var compras = []
+  var comprasAPagar = []
 
   method puedePagar(costo) = costo <= maximoPermitido
 
   method comprar(cosa, costo){
-    compras.add(new CompraEnCredito(cosa = cosa, mesDeLaCompra = mes.mesActual(), mesAPagar = mes.mesSiguiente(), costoTotal = costo))
+    comprasAPagar.add(new CompraEnCredito(cosa = cosa, 
+                                         mesDeLaCompra = mes.mesActual(), 
+                                         mesAPagar = mes.mesSiguiente(), 
+                                         costoTotal = costo, 
+                                         cuotasRestantes = cantidadDeCuotas,
+                                         cantidadDeCuotas = cantidadDeCuotas))
   }
 
-  method 
+  method tieneCuotasImpagas() = comprasAPagar.size() > 0
 
-  /*method pagarCuotas(){
-    if(compras.any{compra => compra.mesAPagar() == mes.mesActual()}){
-        compras.find{compra => compra.mesAPagar() == mes.mesActual()}
-    }
-  }*/
 }
 
 class CompraEnCredito{
   const cosa
   const mesDeLaCompra
-  var property mesAPagar
+  const cantidadDeCuotas
+  var cuotasRestantes
+  var cuotasImpagas = []
+  var property mesAPagar = mesDeLaCompra + 1
   const costoTotal
 
-  method costoDeLaCuota(){
-    costoTotal + costoTotal * bancoCentral.interesActual()
+  method costoDeLaCuota() = costoTotal / cantidadDeCuotas * bancoCentral.interesActual()
+
+  method pagarCuota(persona){
+    if(mes.mesActual() == mesAPagar){
+      if(persona.efectivo().puedePagar(self.costoDeLaCuota())){
+        persona.efectivo().pagarCuota(self.costoDeLaCuota())
+        mesAPagar = mes.mesSiguiente()
+        cuotasRestantes -= 1
+      } else {
+        cuotasImpagas.add(self.costoDeLaCuota())
+      }
+    }
   }
+
 }
 
 object mes {
@@ -104,7 +118,7 @@ object mes {
   method cambiarMes(persona){
     mesActual = self.mesSiguiente()
     persona.efectivo().efectivoDisponible(persona.efectivo().efectivoDisponible() + persona.salarioMensual())
-    persona.pagarCuotas()
+    persona.efectivo().pagarCuota()
   }
 
   method pasanXMeses(cantidad){
@@ -116,16 +130,14 @@ object mes {
 }
 
 object bancoCentral {
-  var property interesActual = 2
+  var property interesActual = 1.2
   method cambiarInteres(nuevoInteres){
     interesActual = nuevoInteres
   }
 }
 
 object grupo{
-  method personaConMasCosasCompradas(grupoDePersonas){
-    grupoDePersonas.max{persona => persona.cosasCompradas().size()}
-  }
+  method personaConMasCosasCompradas(grupoDePersonas) = grupoDePersonas.max{persona => persona.cosasCompradas().size()}
 }
 
 object trabajo{
