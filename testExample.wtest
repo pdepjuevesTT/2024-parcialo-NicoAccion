@@ -1,9 +1,44 @@
-import example.pepita
+import persona.*
 
-describe "group of tests for pepita" {
+describe "Compras" {
+const lionel = new Persona(efectivo = new Efectivo(efectivoDisponible = 500), salarioMensual = 1000)
+  test "Pago en efectivo" {
+    lionel.comprar("casa", 200)
 
-  test "pepita has initial energy" {
-    assert.equals(100, pepita.energy())
+    assert.equals(300, lionel.formaDePagoPreferida().efectivoDisponible())
   }
 
+  test "Pago con debito" {
+    const tarjeta1 = new Debito(saldoDisponible = 500)
+    lionel.nuevaTarjetaDeDebito(tarjeta1)
+    lionel.cambiarPreferido(tarjeta1)
+    lionel.comprar("casa", 200)
+
+    assert.equals(300, lionel.formaDePagoPreferida().saldoDisponible())
+  }
+
+  test "Pago con credito" {
+    const tarjeta1 = new Credito(maximoPermitido = 1000, cantidadDeCuotas = 20)
+    lionel.cambiarPreferido(tarjeta1)
+    lionel.comprar("casa", 200)
+    mes.cambiarMes(lionel)
+
+    assert.equals(188, lionel.formaDePagoPreferida().efectivoDisponible())
+  }
+
+  test "Persona con mas cosas compradas" {
+    const juan = new Persona(efectivo = new Efectivo(efectivoDisponible = 500), salarioMensual = 1000)
+    lionel.comprar("casa", 200)
+    
+    assert.equals(lionel, grupo.personaConMasCosasCompradas(#{lionel, juan}))
+  }
+}
+
+describe "sueldo" {
+const lionel = new Persona(efectivo = new Efectivo(efectivoDisponible = 500), salarioMensual = 1000)
+  test "Recibir sueldo"{
+    mes.cambiarMes(lionel)
+
+    assert.equals(1500, lionel.efectivo().efectivoDisponible())
+  }
 }
